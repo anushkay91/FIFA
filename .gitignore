@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Production builds
+dist/
+frontend/dist/
+
+# Python Cache
+__pycache__/
+**/__pycache__/
+*.pyc
+
+# Virtual Environments
+venv/
+.venv/
+env/
+
+# Environment Variables
+.env
+.env.local
+
+# Logs
+*.log
+.system_generated/
