@@ -261,3 +261,116 @@ h1, h2, h3, h4, h5, h6 {
     overflow-y: auto;
   }
 }
+
+/* ==========================================================================
+   Accessibility & Themes (WCAG 2.2 AA)
+   ========================================================================== */
+
+/* Skip-to-content Link style */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 20px;
+  background: var(--accent-blue);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 0 0 8px 8px;
+  z-index: 9999;
+  font-weight: bold;
+  text-decoration: none;
+  font-family: var(--font-sans);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: top 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid #ffffff !important;
+  outline-offset: -4px !important;
+}
+
+/* Keyboard outline visibility */
+*:focus-visible {
+  outline: 3px solid var(--accent-blue) !important;
+  outline-offset: 2px !important;
+}
+
+/* Light Mode Overrides */
+body.light-mode {
+  --bg-primary: #f5f7fa;
+  --bg-secondary: rgba(255, 255, 255, 0.85);
+  --bg-tertiary: #ffffff;
+  --border-color: rgba(0, 0, 0, 0.12);
+  --text-primary: #121620;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+  --border-glow: rgba(10, 132, 255, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+}
+body.light-mode header, body.light-mode select, body.light-mode input, body.light-mode textarea {
+  background-color: #ffffff !important;
+  color: #121620 !important;
+}
+
+/* High Contrast Mode Overrides (WCAG AAA AAA standard contrast) */
+body.high-contrast {
+  --bg-primary: #000000;
+  --bg-secondary: #000000;
+  --bg-tertiary: #000000;
+  --border-color: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #ffff00; /* Neon yellow for details */
+  --text-muted: #ffff00;
+  --accent-blue: #00ffff; /* High-contrast Cyan */
+  --accent-blue-glow: none;
+  --accent-green: #00ff00; /* Pure Green */
+  --accent-yellow: #ffff00; /* Pure Yellow */
+  --accent-orange: #ffff00;
+  --accent-red: #ff0000; /* Pure Red */
+  --border-glow: #ffffff;
+  --glass-shadow: none;
+  --glass-backdrop: none;
+}
+body.high-contrast * {
+  border-color: #ffffff !important;
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+body.high-contrast button, body.high-contrast select, body.high-contrast input, body.high-contrast textarea {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+/* Reduced Motion Utility */
+body.reduced-motion *,
+body.reduced-motion::before,
+body.reduced-motion::after {
+  animation-delay: -1ms !important;
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  background-attachment: scroll !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
+  transition: none !important;
+}
+body.reduced-motion .map-route-path {
+  animation: none !important;
+  stroke-dasharray: none !important;
+}
+
+/* Text Size Scaling */
+body.font-lg {
+  font-size: 1.15rem;
+}
+body.font-lg h1 { font-size: 1.6rem; }
+body.font-lg h2 { font-size: 1.4rem; }
+body.font-lg h3 { font-size: 1.2rem; }
+
+body.font-xl {
+  font-size: 1.3rem;
+}
+body.font-xl h1 { font-size: 1.8rem; }
+body.font-xl h2 { font-size: 1.6rem; }
+body.font-xl h3 { font-size: 1.4rem; }
+

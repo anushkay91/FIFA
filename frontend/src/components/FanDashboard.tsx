@@ -123,11 +123,13 @@ export const FanDashboard: React.FC<FanDashboardProps> = ({
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {/* Language Selector */}
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Preferred Language</label>
+              <label htmlFor="fan-lang" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Preferred Language</label>
               <select 
+                id="fan-lang"
                 value={language} 
                 onChange={(e) => setLanguage(e.target.value)}
                 style={{ width: "100%", padding: "8px", borderRadius: "6px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+                aria-label="Preferred Language Selector"
               >
                 <option value="en">English (EN)</option>
                 <option value="es">Español (ES)</option>
@@ -140,43 +142,51 @@ export const FanDashboard: React.FC<FanDashboardProps> = ({
             {/* Seat Information */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Section</label>
+                <label htmlFor="fan-section" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Section</label>
                 <input 
+                  id="fan-section"
                   type="number" 
                   value={section} 
                   min="101" 
                   max="350"
                   onChange={(e) => setSection(Number(e.target.value))}
                   style={{ width: "100%", padding: "8px", borderRadius: "6px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+                  aria-label="Seat Section Number (101 to 350)"
                 />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Row</label>
+                <label htmlFor="fan-row" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Row</label>
                 <input 
+                  id="fan-row"
                   type="text" 
                   value={row} 
                   onChange={(e) => setRow(e.target.value.toUpperCase())}
                   style={{ width: "100%", padding: "8px", borderRadius: "6px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", textAlign: "center" }}
+                  aria-label="Seat Row Letter (A to Z)"
                 />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Seat</label>
+                <label htmlFor="fan-seat" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Seat</label>
                 <input 
+                  id="fan-seat"
                   type="number" 
                   value={seat} 
                   onChange={(e) => setSeat(Number(e.target.value))}
                   style={{ width: "100%", padding: "8px", borderRadius: "6px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+                  aria-label="Seat Number"
                 />
               </div>
             </div>
 
             {/* Concession Target Selector */}
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Route Stopover Preference</label>
+              <label htmlFor="fan-pref" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Route Stopover Preference</label>
               <select 
+                id="fan-pref"
                 value={vendorPref} 
                 onChange={(e) => setVendorPref(e.target.value)}
                 style={{ width: "100%", padding: "8px", borderRadius: "6px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+                aria-label="Route Stopover Preference Selector"
               >
                 <option value="food">Local Food Stands (World Cup Eats)</option>
                 <option value="merch">Official Merch Store</option>
@@ -187,12 +197,14 @@ export const FanDashboard: React.FC<FanDashboardProps> = ({
 
             {/* Accessibility Toggle */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0" }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--text-primary)" }}>♿ Step-free / Elevator Routing</span>
+              <label htmlFor="fan-accessibility" style={{ fontSize: "0.85rem", color: "var(--text-primary)", cursor: "pointer" }}>♿ Step-free / Elevator Routing</label>
               <input 
+                id="fan-accessibility"
                 type="checkbox" 
                 checked={accessibility} 
                 onChange={(e) => setAccessibility(e.target.checked)}
-                style={{ width: "18px", height: "18px", accentColor: "var(--accent-blue)" }}
+                style={{ width: "18px", height: "18px", accentColor: "var(--accent-blue)", cursor: "pointer" }}
+                aria-label="Enable Step-free and elevator routing options"
               />
             </div>
 
@@ -201,6 +213,7 @@ export const FanDashboard: React.FC<FanDashboardProps> = ({
               onClick={handleGenerateRoute}
               disabled={loading}
               style={{ marginTop: "10px", width: "100%" }}
+              aria-label="Generate AI Navigation Path"
             >
               {loading ? "Calculating Route..." : "Generate AI Nav Path"}
             </button>

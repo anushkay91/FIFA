@@ -85,13 +85,14 @@ export const VolunteerDashboard: React.FC<VolunteerDashboardProps> = ({
       <div className="glass-panel" style={{ padding: "20px" }}>
         <h3 style={{ fontSize: "1.2rem", marginBottom: "15px" }}>Manual AI-Agent Dispatch</h3>
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          
           <div>
-            <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Select Volunteer Squad</label>
+            <label htmlFor="volunteer-squad" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Select Volunteer Squad</label>
             <select 
+              id="volunteer-squad"
               value={selectedVol} 
               onChange={(e) => setSelectedVol(e.target.value)}
               style={{ width: "100%", padding: "8px", borderRadius: "6px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+              aria-label="Select Volunteer Squad"
             >
               {volunteers.map((vol) => (
                 <option key={vol.id} value={vol.id}>{vol.name}</option>
@@ -100,11 +101,13 @@ export const VolunteerDashboard: React.FC<VolunteerDashboardProps> = ({
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Target Deployment Zone</label>
+            <label htmlFor="volunteer-zone" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Target Deployment Zone</label>
             <select 
+              id="volunteer-zone"
               value={selectedZone} 
               onChange={(e) => setSelectedZone(e.target.value)}
               style={{ width: "100%", padding: "8px", borderRadius: "6px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+              aria-label="Target Deployment Zone"
             >
               {zones.map((z) => (
                 <option key={z} value={z}>{z}</option>
@@ -113,12 +116,14 @@ export const VolunteerDashboard: React.FC<VolunteerDashboardProps> = ({
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Task Assignment Directives</label>
+            <label htmlFor="volunteer-task" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Task Assignment Directives</label>
             <textarea 
+              id="volunteer-task"
               value={taskText} 
               onChange={(e) => setTaskText(e.target.value)}
               rows={3}
               style={{ width: "100%", padding: "8px", borderRadius: "6px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontFamily: "var(--font-sans)", fontSize: "0.85rem", resize: "none" }}
+              aria-label="Task Assignment Directives"
             />
           </div>
 
@@ -126,6 +131,7 @@ export const VolunteerDashboard: React.FC<VolunteerDashboardProps> = ({
             type="submit" 
             className="btn-primary"
             style={{ width: "100%", marginTop: "5px" }}
+            aria-label="Dispatch Squad Directives"
           >
             Dispatch Directives
           </button>

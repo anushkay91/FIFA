@@ -7,25 +7,25 @@ class StadiumSimulation:
     def __init__(self):
         # Configuration definitions for Zones
         self.zones = {
-            "Gate A": {"type": "gate", "capacity": 8000, "occupancy": 1500, "flow_rate": 80, "wait_time": 5},
-            "Gate B": {"type": "gate", "capacity": 8000, "occupancy": 1200, "flow_rate": 75, "wait_time": 4},
-            "Gate C": {"type": "gate", "capacity": 10000, "occupancy": 1800, "flow_rate": 90, "wait_time": 6},
-            "Gate D": {"type": "gate", "capacity": 8000, "occupancy": 1400, "flow_rate": 70, "wait_time": 5},
-            "Gate E": {"type": "gate", "capacity": 8000, "occupancy": 900, "flow_rate": 60, "wait_time": 3},
-            "Gate F": {"type": "gate", "capacity": 10000, "occupancy": 2100, "flow_rate": 95, "wait_time": 7},
+            "Gate A": {"type": "gate", "capacity": 8000, "occupancy": 1500, "flow_rate": 80, "wait_time": 5, "density": 0.18, "risk_level": "low"},
+            "Gate B": {"type": "gate", "capacity": 8000, "occupancy": 1200, "flow_rate": 75, "wait_time": 4, "density": 0.15, "risk_level": "low"},
+            "Gate C": {"type": "gate", "capacity": 10000, "occupancy": 1800, "flow_rate": 90, "wait_time": 6, "density": 0.18, "risk_level": "low"},
+            "Gate D": {"type": "gate", "capacity": 8000, "occupancy": 1400, "flow_rate": 70, "wait_time": 5, "density": 0.175, "risk_level": "low"},
+            "Gate E": {"type": "gate", "capacity": 8000, "occupancy": 900, "flow_rate": 60, "wait_time": 3, "density": 0.11, "risk_level": "low"},
+            "Gate F": {"type": "gate", "capacity": 10000, "occupancy": 2100, "flow_rate": 95, "wait_time": 7, "density": 0.21, "risk_level": "low"},
             
-            "Concourse North": {"type": "concourse", "capacity": 12000, "occupancy": 3000, "flow_rate": 200, "wait_time": 0},
-            "Concourse East": {"type": "concourse", "capacity": 12000, "occupancy": 4500, "flow_rate": 180, "wait_time": 0},
-            "Concourse South": {"type": "concourse", "capacity": 12000, "occupancy": 3500, "flow_rate": 190, "wait_time": 0},
-            "Concourse West": {"type": "concourse", "capacity": 12000, "occupancy": 2800, "flow_rate": 170, "wait_time": 0},
+            "Concourse North": {"type": "concourse", "capacity": 12000, "occupancy": 3000, "flow_rate": 200, "wait_time": 0, "density": 0.25, "risk_level": "low"},
+            "Concourse East": {"type": "concourse", "capacity": 12000, "occupancy": 4500, "flow_rate": 180, "wait_time": 0, "density": 0.375, "risk_level": "low"},
+            "Concourse South": {"type": "concourse", "capacity": 12000, "occupancy": 3500, "flow_rate": 190, "wait_time": 0, "density": 0.29, "risk_level": "low"},
+            "Concourse West": {"type": "concourse", "capacity": 12000, "occupancy": 2800, "flow_rate": 170, "wait_time": 0, "density": 0.23, "risk_level": "low"},
             
-            "Seating 100 Level": {"type": "seating", "capacity": 30000, "occupancy": 12000, "flow_rate": 400, "wait_time": 0},
-            "Seating 200 Level": {"type": "seating", "capacity": 25000, "occupancy": 9500, "flow_rate": 300, "wait_time": 0},
-            "Seating 300 Level": {"type": "seating", "capacity": 20000, "occupancy": 8000, "flow_rate": 250, "wait_time": 0},
+            "Seating 100 Level": {"type": "seating", "capacity": 30000, "occupancy": 12000, "flow_rate": 400, "wait_time": 0, "density": 0.4, "risk_level": "medium"},
+            "Seating 200 Level": {"type": "seating", "capacity": 25000, "occupancy": 9500, "flow_rate": 300, "wait_time": 0, "density": 0.38, "risk_level": "low"},
+            "Seating 300 Level": {"type": "seating", "capacity": 20000, "occupancy": 8000, "flow_rate": 250, "wait_time": 0, "density": 0.4, "risk_level": "medium"},
             
-            "Metro Station": {"type": "transit", "capacity": 15000, "occupancy": 2000, "flow_rate": 220, "wait_time": 8},
-            "West Shuttle Lot": {"type": "transit", "capacity": 8000, "occupancy": 800, "flow_rate": 120, "wait_time": 4},
-            "East Rideshare Zone": {"type": "transit", "capacity": 6000, "occupancy": 600, "flow_rate": 90, "wait_time": 5}
+            "Metro Station": {"type": "transit", "capacity": 15000, "occupancy": 2000, "flow_rate": 220, "wait_time": 8, "density": 0.13, "risk_level": "low"},
+            "West Shuttle Lot": {"type": "transit", "capacity": 8000, "occupancy": 800, "flow_rate": 120, "wait_time": 4, "density": 0.1, "risk_level": "low"},
+            "East Rideshare Zone": {"type": "transit", "capacity": 6000, "occupancy": 600, "flow_rate": 90, "wait_time": 5, "density": 0.1, "risk_level": "low"}
         }
         
         # Gate status ('open', 'locked', 'slowed')

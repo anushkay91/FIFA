@@ -1,11 +1,66 @@
 // src/App.tsx
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { DigitalTwin } from "./components/DigitalTwin";
-import { FanDashboard } from "./components/FanDashboard";
-import { OpsDashboard } from "./components/OpsDashboard";
-import { VolunteerDashboard } from "./components/VolunteerDashboard";
-import { SecurityDashboard } from "./components/SecurityDashboard";
-import { TransportDashboard } from "./components/TransportDashboard";
+
+// Lazy-loaded dashboard components for performance
+const FanDashboard = lazy(() => import("./components/FanDashboard").then(m => ({ default: m.FanDashboard })));
+const OpsDashboard = lazy(() => import("./components/OpsDashboard").then(m => ({ default: m.OpsDashboard })));
+const VolunteerDashboard = lazy(() => import("./components/VolunteerDashboard").then(m => ({ default: m.VolunteerDashboard })));
+const SecurityDashboard = lazy(() => import("./components/SecurityDashboard").then(m => ({ default: m.SecurityDashboard })));
+const TransportDashboard = lazy(() => import("./components/TransportDashboard").then(m => ({ default: m.TransportDashboard })));
+
+// Reusable Error Boundary for widget resiliency
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("ErrorBoundary caught widget crash:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="glass-panel" style={{ padding: "20px", textAlign: "center", border: "1px solid var(--accent-red)" }}>
+          <h4 style={{ color: "var(--accent-red)", marginBottom: "8px" }}>Dashboard Widget Offline</h4>
+          <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: "15px" }}>
+            An unexpected error occurred rendering this component.
+          </p>
+          <button 
+            className="btn-primary" 
+            onClick={() => this.setState({ hasError: false, error: null })}
+            style={{ fontSize: "0.8rem", padding: "8px 16px" }}
+          >
+            Retry Loading Widget
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Loading Skeleton Placeholder
+const SkeletonLoader = () => (
+  <div className="glass-panel" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "15px", height: "100%" }}>
+    <div style={{ height: "24px", width: "60%", background: "rgba(255,255,255,0.05)", borderRadius: "4px" }} />
+    <div style={{ height: "120px", background: "rgba(255,255,255,0.02)", borderRadius: "8px" }} />
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      <div style={{ height: "14px", background: "rgba(255,255,255,0.05)", borderRadius: "4px" }} />
+      <div style={{ height: "14px", background: "rgba(255,255,255,0.05)", borderRadius: "4px", width: "80%" }} />
+    </div>
+  </div>
+);
 
 const getApiBase = () => {
   if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
@@ -53,6 +108,15 @@ export default function App() {
   const [role, setRole] = useState<"fan" | "ops" | "volunteer" | "security" | "transport">("ops");
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [activeRoute, setActiveRoute] = useState<{ entry_gate: string; concourse: string } | null>(null);
+  
+  // Accessibility preferences state
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [contrast, setContrast] = useState<"normal" | "high">("normal");
+  const [motion, setMotion] = useState<"normal" | "reduced">("normal");
+  const [fontSize, setFontSize] = useState<"medium" | "large" | "xlarge">("medium");
+
+  // Offline monitoring state
+  const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
   
   // Real-time states
   const [zones, setZones] = useState<Record<string, Zone>>({
@@ -108,8 +172,32 @@ export default function App() {
   const [connected, setConnected] = useState<boolean>(false);
   const wsRef = useRef<WebSocket | null>(null);
 
+  // Apply accessibility settings classes to body
+  useEffect(() => {
+    const classes = [];
+    if (theme === "light") classes.push("light-mode");
+    if (contrast === "high") classes.push("high-contrast");
+    if (motion === "reduced") classes.push("reduced-motion");
+    if (fontSize === "large") classes.push("font-lg");
+    if (fontSize === "xlarge") classes.push("font-xl");
+    document.body.className = classes.join(" ");
+  }, [theme, contrast, motion, fontSize]);
+
+  // Offline event monitoring
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
   // Connect to backend WebSocket
   useEffect(() => {
+    if (isOffline) return; // Skip socket attempts while offline
     const connectWS = () => {
       const ws = new WebSocket(getWsUrl());
       wsRef.current = ws;
@@ -271,9 +359,19 @@ export default function App() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
       
+      {/* WCAG 2.2 Skip-to-content Link */}
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+
+      {/* OFFLINE STATUS DETECTOR STRIP */}
+      {isOffline && (
+        <div style={{ background: "var(--accent-orange)", color: "black", textAlign: "center", padding: "6px", fontSize: "0.8rem", fontWeight: "bold", zIndex: 1000 }}>
+          ⚠️ Network connection lost. Operating in offline simulation mode. Remote updates suspended.
+        </div>
+      )}
+      
       {/* EMERGENCY TICKER BANNER */}
       {isEvacuation && (
-        <div className="evac-banner">
+        <div className="evac-banner" role="alert" aria-live="assertive">
           <div className="evac-ticker">
             🚨 EMERGENCY EVACUATION ACTIVE. STADIUM SENSORS DETECT THREAT AT SEATING BOWL. PROCEED CALMLY TO YOUR NEAREST EXIT GATES A-F. ALL LOCKDOWN SYSTEMS OVERRIDDEN. FOLLOW INSTRUCTIONS FROM EMERGENCY PERSONNEL.
           </div>
@@ -291,6 +389,7 @@ export default function App() {
           justifyContent: "space-between", 
           alignItems: "center" 
         }}
+        role="banner"
       >
         <div>
           <h1 style={{ fontSize: "1.4rem", fontFamily: "var(--font-display)", fontWeight: 800, letterSpacing: "-0.01em", color: "var(--text-primary)" }}>
@@ -300,83 +399,93 @@ export default function App() {
         </div>
 
         {/* ROLE BAR SWITCHER */}
-        <div style={{ display: "flex", background: "rgba(255,255,255,0.03)", borderRadius: "10px", padding: "4px", border: "1px solid var(--border-color)" }}>
+        <div style={{ display: "flex", background: "rgba(255,255,255,0.03)", borderRadius: "10px", padding: "4px", border: "1px solid var(--border-color)" }} role="navigation" aria-label="Role Switcher">
           <button 
             onClick={() => setRole("ops")}
+            aria-label="Switch to Operations Dashboard"
+            aria-current={role === "ops" ? "page" : undefined}
             style={{ 
               padding: "6px 14px", 
               borderRadius: "8px", 
               border: "none", 
               background: role === "ops" ? "var(--accent-blue)" : "none", 
               color: "white", 
-              fontWeight: 500,
-              fontSize: "0.8rem",
-              cursor: "pointer",
-              transition: "var(--transition-smooth)"
+              fontWeight: 500, 
+              fontSize: "0.8rem", 
+              cursor: "pointer", 
+              transition: "var(--transition-smooth)" 
             }}
           >
             Operations
           </button>
           <button 
             onClick={() => setRole("fan")}
+            aria-label="Switch to Fan Companion Portal"
+            aria-current={role === "fan" ? "page" : undefined}
             style={{ 
               padding: "6px 14px", 
               borderRadius: "8px", 
               border: "none", 
               background: role === "fan" ? "var(--accent-blue)" : "none", 
               color: "white", 
-              fontWeight: 500,
-              fontSize: "0.8rem",
-              cursor: "pointer",
-              transition: "var(--transition-smooth)"
+              fontWeight: 500, 
+              fontSize: "0.8rem", 
+              cursor: "pointer", 
+              transition: "var(--transition-smooth)" 
             }}
           >
             Fan Portal
           </button>
           <button 
             onClick={() => setRole("volunteer")}
+            aria-label="Switch to Volunteer Squad Dispatch"
+            aria-current={role === "volunteer" ? "page" : undefined}
             style={{ 
               padding: "6px 14px", 
               borderRadius: "8px", 
               border: "none", 
               background: role === "volunteer" ? "var(--accent-blue)" : "none", 
               color: "white", 
-              fontWeight: 500,
-              fontSize: "0.8rem",
-              cursor: "pointer",
-              transition: "var(--transition-smooth)"
+              fontWeight: 500, 
+              fontSize: "0.8rem", 
+              cursor: "pointer", 
+              transition: "var(--transition-smooth)" 
             }}
           >
             Volunteers
           </button>
           <button 
             onClick={() => setRole("security")}
+            aria-label="Switch to Security Alarm Control"
+            aria-current={role === "security" ? "page" : undefined}
             style={{ 
               padding: "6px 14px", 
               borderRadius: "8px", 
               border: "none", 
               background: role === "security" ? "var(--accent-blue)" : "none", 
               color: "white", 
-              fontWeight: 500,
-              fontSize: "0.8rem",
-              cursor: "pointer",
-              transition: "var(--transition-smooth)"
+              fontWeight: 500, 
+              fontSize: "0.8rem", 
+              cursor: "pointer", 
+              transition: "var(--transition-smooth)" 
             }}
           >
             Security
           </button>
           <button 
             onClick={() => setRole("transport")}
+            aria-label="Switch to Transport Scheduling"
+            aria-current={role === "transport" ? "page" : undefined}
             style={{ 
               padding: "6px 14px", 
               borderRadius: "8px", 
               border: "none", 
               background: role === "transport" ? "var(--accent-blue)" : "none", 
               color: "white", 
-              fontWeight: 500,
-              fontSize: "0.8rem",
-              cursor: "pointer",
-              transition: "var(--transition-smooth)"
+              fontWeight: 500, 
+              fontSize: "0.8rem", 
+              cursor: "pointer", 
+              transition: "var(--transition-smooth)" 
             }}
           >
             Transport
@@ -401,13 +510,69 @@ export default function App() {
       </header>
 
       {/* DASHBOARD LAYOUT GRID */}
-      <main className="dashboard-grid">
+      <main className="dashboard-grid" id="main-content">
         
         {/* LEFT COLUMN: SIMULATION CONTROLS */}
-        <section className="glass-panel" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "15px" }}>
+        <section className="glass-panel" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "15px", overflowY: "auto" }} aria-label="Control Matrix and Settings">
           <div>
             <h3 style={{ fontSize: "1.1rem" }}>Simulation Matrix</h3>
             <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Adjust settings to view AI routing dynamically</p>
+          </div>
+
+          {/* WCAG 2.2 AA Accessibility Settings Panel */}
+          <div style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "15px", display: "flex", flexDirection: "column", gap: "10px" }}>
+            <h4 style={{ fontSize: "0.9rem", color: "var(--text-primary)" }}>♿ Accessibility Settings</h4>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+              <div>
+                <label htmlFor="theme-select" style={{ display: "block", fontSize: "0.65rem", color: "var(--text-secondary)", marginBottom: "3px" }}>Contrast Theme</label>
+                <select 
+                  id="theme-select"
+                  value={contrast === "high" ? "high" : theme}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "high") {
+                      setContrast("high");
+                    } else {
+                      setContrast("normal");
+                      setTheme(val as "dark" | "light");
+                    }
+                  }}
+                  style={{ width: "100%", padding: "6px", fontSize: "0.75rem", borderRadius: "4px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+                >
+                  <option value="dark">Dark Theme</option>
+                  <option value="light">Light Theme</option>
+                  <option value="high">High Contrast</option>
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="motion-select" style={{ display: "block", fontSize: "0.65rem", color: "var(--text-secondary)", marginBottom: "3px" }}>Screen Motion</label>
+                <select 
+                  id="motion-select"
+                  value={motion}
+                  onChange={(e) => setMotion(e.target.value as "normal" | "reduced")}
+                  style={{ width: "100%", padding: "6px", fontSize: "0.75rem", borderRadius: "4px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+                >
+                  <option value="normal">Smooth Motion</option>
+                  <option value="reduced">Reduced Motion</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="font-size-select" style={{ display: "block", fontSize: "0.65rem", color: "var(--text-secondary)", marginBottom: "3px" }}>Text Zoom Size</label>
+              <select 
+                id="font-size-select"
+                value={fontSize}
+                onChange={(e) => setFontSize(e.target.value as "medium" | "large" | "xlarge")}
+                style={{ width: "100%", padding: "6px", fontSize: "0.75rem", borderRadius: "4px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
+              >
+                <option value="medium">Default size (100%)</option>
+                <option value="large">Large Text (115%)</option>
+                <option value="xlarge">Extra Large (130% / 200% Zoomable)</option>
+              </select>
+            </div>
           </div>
 
           <div>
@@ -477,50 +642,54 @@ export default function App() {
         </section>
 
         {/* RIGHT COLUMN: ROLE-BASED DASHBOARD CARD */}
-        <section style={{ overflowY: "auto", height: "100%" }}>
-          {role === "ops" && (
-            <OpsDashboard 
-              attendance={attendance}
-              maxAttendance={maxAttendance}
-              matchTime={matchTime}
-              briefing={briefing}
-              predictions={predictions}
-              zones={zones}
-              activeIncidentsCount={incidents.length}
-            />
-          )}
-          {role === "fan" && (
-            <FanDashboard 
-              gateWaitTimes={gateWaitTimes}
-              onRouteGenerated={setActiveRoute}
-              isEvacuation={isEvacuation}
-            />
-          )}
-          {role === "volunteer" && (
-            <VolunteerDashboard 
-              volunteers={volunteers}
-              onDispatch={handleVolunteerDispatch}
-              zones={Object.keys(zones).filter((z) => zones[z].type !== "seating")}
-            />
-          )}
-          {role === "security" && (
-            <SecurityDashboard 
-              gateStatuses={gateStatuses}
-              onGateControl={handleGateControl}
-              incidents={incidents}
-              onReportIncident={handleReportIncident}
-              onResolveIncident={handleResolveIncident}
-              isEvacuation={isEvacuation}
-              onTriggerEvacuation={handleTriggerEvacuation}
-              zones={Object.keys(zones)}
-            />
-          )}
-          {role === "transport" && (
-            <TransportDashboard 
-              zones={zones}
-              scenario={scenario}
-            />
-          )}
+        <section style={{ overflowY: "auto", height: "100%" }} role="region" aria-label="Active Dashboard Module">
+          <ErrorBoundary>
+            <Suspense fallback={<SkeletonLoader />}>
+              {role === "ops" && (
+                <OpsDashboard 
+                  attendance={attendance}
+                  maxAttendance={maxAttendance}
+                  matchTime={matchTime}
+                  briefing={briefing}
+                  predictions={predictions}
+                  zones={zones}
+                  activeIncidentsCount={incidents.length}
+                />
+              )}
+              {role === "fan" && (
+                <FanDashboard 
+                  gateWaitTimes={gateWaitTimes}
+                  onRouteGenerated={setActiveRoute}
+                  isEvacuation={isEvacuation}
+                />
+              )}
+              {role === "volunteer" && (
+                <VolunteerDashboard 
+                  volunteers={volunteers}
+                  onDispatch={handleVolunteerDispatch}
+                  zones={Object.keys(zones).filter((z) => zones[z].type !== "seating")}
+                />
+              )}
+              {role === "security" && (
+                <SecurityDashboard 
+                  gateStatuses={gateStatuses}
+                  onGateControl={handleGateControl}
+                  incidents={incidents}
+                  onReportIncident={handleReportIncident}
+                  onResolveIncident={handleResolveIncident}
+                  isEvacuation={isEvacuation}
+                  onTriggerEvacuation={handleTriggerEvacuation}
+                  zones={Object.keys(zones)}
+                />
+              )}
+              {role === "transport" && (
+                <TransportDashboard 
+                  zones={zones}
+                  scenario={scenario}
+                />
+              )}
+            </Suspense>
+          </ErrorBoundary>
         </section>
 
       </main>

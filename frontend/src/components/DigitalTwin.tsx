@@ -142,6 +142,10 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
           {/* Metro Station (Top-Left) */}
           <g 
             onClick={() => setSelectedZone("Metro Station")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Metro Station"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Transit Hub: Metro Station. Wait time: ${zones["Metro Station"]?.wait_time || 0} minutes. Density: ${Math.round((zones["Metro Station"]?.density || 0) * 100)} percent.`}
             style={{ cursor: "pointer" }}
           >
             <rect x="30" y="30" width="100" height="60" rx="8" fill={getZoneColor("Metro Station")} stroke={getBorderColor("Metro Station")} strokeWidth={selectedZone === "Metro Station" ? "2" : "1"} />
@@ -151,6 +155,10 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
           {/* West Shuttle Lot (Bottom-Left) */}
           <g 
             onClick={() => setSelectedZone("West Shuttle Lot")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("West Shuttle Lot"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Transit Hub: West Shuttle Parking. Wait time: ${zones["West Shuttle Lot"]?.wait_time || 0} minutes. Density: ${Math.round((zones["West Shuttle Lot"]?.density || 0) * 100)} percent.`}
             style={{ cursor: "pointer" }}
           >
             <rect x="30" y="510" width="100" height="60" rx="8" fill={getZoneColor("West Shuttle Lot")} stroke={getBorderColor("West Shuttle Lot")} strokeWidth={selectedZone === "West Shuttle Lot" ? "2" : "1"} />
@@ -160,6 +168,10 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
           {/* East Rideshare Zone (Right) */}
           <g 
             onClick={() => setSelectedZone("East Rideshare Zone")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("East Rideshare Zone"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Transit Hub: East Rideshare Pick-up. Wait time: ${zones["East Rideshare Zone"]?.wait_time || 0} minutes. Density: ${Math.round((zones["East Rideshare Zone"]?.density || 0) * 100)} percent.`}
             style={{ cursor: "pointer" }}
           >
             <rect x="670" y="150" width="100" height="60" rx="8" fill={getZoneColor("East Rideshare Zone")} stroke={getBorderColor("East Rideshare Zone")} strokeWidth={selectedZone === "East Rideshare Zone" ? "2" : "1"} />
@@ -168,44 +180,154 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
 
           {/* OUTER CONTEXT GATES (Circles around Stadium Boundary) */}
           {/* Gate A (North West) */}
-          <circle cx="280" cy="65" r="16" fill={getZoneColor("Gate A")} stroke={getBorderColor("Gate A")} strokeWidth="2" className="map-zone" onClick={() => setSelectedZone("Gate A")} />
+          <circle 
+            cx="280" cy="65" r="16" 
+            fill={getZoneColor("Gate A")} 
+            stroke={getBorderColor("Gate A")} 
+            strokeWidth="2" 
+            className="map-zone" 
+            onClick={() => setSelectedZone("Gate A")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Gate A"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Gate Terminal: Gate A. Wait time: ${zones["Gate A"]?.wait_time || 0} minutes. Status: ${gateStatuses["Gate A"] || "open"}.`}
+          />
           <text x="280" y="69" fill="var(--text-primary)" fontSize="10" fontWeight="bold" textAnchor="middle" pointerEvents="none">A</text>
           
           {/* Gate B (North East) */}
-          <circle cx="520" cy="65" r="16" fill={getZoneColor("Gate B")} stroke={getBorderColor("Gate B")} strokeWidth="2" className="map-zone" onClick={() => setSelectedZone("Gate B")} />
+          <circle 
+            cx="520" cy="65" r="16" 
+            fill={getZoneColor("Gate B")} 
+            stroke={getBorderColor("Gate B")} 
+            strokeWidth="2" 
+            className="map-zone" 
+            onClick={() => setSelectedZone("Gate B")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Gate B"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Gate Terminal: Gate B. Wait time: ${zones["Gate B"]?.wait_time || 0} minutes. Status: ${gateStatuses["Gate B"] || "open"}.`}
+          />
           <text x="520" y="69" fill="var(--text-primary)" fontSize="10" fontWeight="bold" textAnchor="middle" pointerEvents="none">B</text>
 
           {/* Gate C (East) */}
-          <circle cx="670" cy="300" r="16" fill={getZoneColor("Gate C")} stroke={getBorderColor("Gate C")} strokeWidth="2" className="map-zone" onClick={() => setSelectedZone("Gate C")} />
+          <circle 
+            cx="670" cy="300" r="16" 
+            fill={getZoneColor("Gate C")} 
+            stroke={getBorderColor("Gate C")} 
+            strokeWidth="2" 
+            className="map-zone" 
+            onClick={() => setSelectedZone("Gate C")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Gate C"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Gate Terminal: Gate C. Wait time: ${zones["Gate C"]?.wait_time || 0} minutes. Status: ${gateStatuses["Gate C"] || "open"}.`}
+          />
           <text x="670" y="304" fill="var(--text-primary)" fontSize="10" fontWeight="bold" textAnchor="middle" pointerEvents="none">C</text>
 
           {/* Gate D (South East) */}
-          <circle cx="520" cy="535" r="16" fill={getZoneColor("Gate D")} stroke={getBorderColor("Gate D")} strokeWidth="2" className="map-zone" onClick={() => setSelectedZone("Gate D")} />
+          <circle 
+            cx="520" cy="535" r="16" 
+            fill={getZoneColor("Gate D")} 
+            stroke={getBorderColor("Gate D")} 
+            strokeWidth="2" 
+            className="map-zone" 
+            onClick={() => setSelectedZone("Gate D")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Gate D"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Gate Terminal: Gate D. Wait time: ${zones["Gate D"]?.wait_time || 0} minutes. Status: ${gateStatuses["Gate D"] || "open"}.`}
+          />
           <text x="520" y="539" fill="var(--text-primary)" fontSize="10" fontWeight="bold" textAnchor="middle" pointerEvents="none">D</text>
 
           {/* Gate E (South West) */}
-          <circle cx="280" cy="535" r="16" fill={getZoneColor("Gate E")} stroke={getBorderColor("Gate E")} strokeWidth="2" className="map-zone" onClick={() => setSelectedZone("Gate E")} />
+          <circle 
+            cx="280" cy="535" r="16" 
+            fill={getZoneColor("Gate E")} 
+            stroke={getBorderColor("Gate E")} 
+            strokeWidth="2" 
+            className="map-zone" 
+            onClick={() => setSelectedZone("Gate E")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Gate E"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Gate Terminal: Gate E. Wait time: ${zones["Gate E"]?.wait_time || 0} minutes. Status: ${gateStatuses["Gate E"] || "open"}.`}
+          />
           <text x="280" y="539" fill="var(--text-primary)" fontSize="10" fontWeight="bold" textAnchor="middle" pointerEvents="none">E</text>
 
           {/* Gate F (West) */}
-          <circle cx="130" cy="300" r="16" fill={getZoneColor("Gate F")} stroke={getBorderColor("Gate F")} strokeWidth="2" className="map-zone" onClick={() => setSelectedZone("Gate F")} />
+          <circle 
+            cx="130" cy="300" r="16" 
+            fill={getZoneColor("Gate F")} 
+            stroke={getBorderColor("Gate F")} 
+            strokeWidth="2" 
+            className="map-zone" 
+            onClick={() => setSelectedZone("Gate F")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Gate F"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Gate Terminal: Gate F. Wait time: ${zones["Gate F"]?.wait_time || 0} minutes. Status: ${gateStatuses["Gate F"] || "open"}.`}
+          />
           <text x="130" y="304" fill="var(--text-primary)" fontSize="10" fontWeight="bold" textAnchor="middle" pointerEvents="none">F</text>
 
           {/* CONCOURSES */}
           {/* Concourse North */}
-          <rect x="250" y="100" width="300" height="35" rx="6" fill={getZoneColor("Concourse North")} stroke={getBorderColor("Concourse North")} strokeWidth={selectedZone === "Concourse North" ? "2" : "1"} className="map-zone" onClick={() => setSelectedZone("Concourse North")} />
+          <rect 
+            x="250" y="100" width="300" height="35" rx="6" 
+            fill={getZoneColor("Concourse North")} 
+            stroke={getBorderColor("Concourse North")} 
+            strokeWidth={selectedZone === "Concourse North" ? "2" : "1"} 
+            className="map-zone" 
+            onClick={() => setSelectedZone("Concourse North")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Concourse North"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Concourse Corridor: Concourse North. Occupancy: ${zones["Concourse North"]?.occupancy.toLocaleString() || 0} fans. Density: ${Math.round((zones["Concourse North"]?.density || 0) * 100)} percent.`}
+          />
           <text x="400" y="122" fill="var(--text-primary)" fontSize="10" textAnchor="middle" pointerEvents="none" fontWeight="500">CONCOURSE NORTH</text>
 
           {/* Concourse South */}
-          <rect x="250" y="465" width="300" height="35" rx="6" fill={getZoneColor("Concourse South")} stroke={getBorderColor("Concourse South")} strokeWidth={selectedZone === "Concourse South" ? "2" : "1"} className="map-zone" onClick={() => setSelectedZone("Concourse South")} />
+          <rect 
+            x="250" y="465" width="300" height="35" rx="6" 
+            fill={getZoneColor("Concourse South")} 
+            stroke={getBorderColor("Concourse South")} 
+            strokeWidth={selectedZone === "Concourse South" ? "2" : "1"} 
+            className="map-zone" 
+            onClick={() => setSelectedZone("Concourse South")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Concourse South"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Concourse Corridor: Concourse South. Occupancy: ${zones["Concourse South"]?.occupancy.toLocaleString() || 0} fans. Density: ${Math.round((zones["Concourse South"]?.density || 0) * 100)} percent.`}
+          />
           <text x="400" y="487" fill="var(--text-primary)" fontSize="10" textAnchor="middle" pointerEvents="none" fontWeight="500">CONCOURSE SOUTH</text>
 
           {/* Concourse East */}
-          <rect x="590" y="170" width="35" height="260" rx="6" fill={getZoneColor("Concourse East")} stroke={getBorderColor("Concourse East")} strokeWidth={selectedZone === "Concourse East" ? "2" : "1"} className="map-zone" onClick={() => setSelectedZone("Concourse East")} />
+          <rect 
+            x="590" y="170" width="35" height="260" rx="6" 
+            fill={getZoneColor("Concourse East")} 
+            stroke={getBorderColor("Concourse East")} 
+            strokeWidth={selectedZone === "Concourse East" ? "2" : "1"} 
+            className="map-zone" 
+            onClick={() => setSelectedZone("Concourse East")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Concourse East"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Concourse Corridor: Concourse East. Occupancy: ${zones["Concourse East"]?.occupancy.toLocaleString() || 0} fans. Density: ${Math.round((zones["Concourse East"]?.density || 0) * 100)} percent.`}
+          />
           <text x="608" y="300" fill="var(--text-primary)" fontSize="10" textAnchor="middle" transform="rotate(-90, 608, 300)" pointerEvents="none" fontWeight="500">CONCOURSE EAST</text>
 
           {/* Concourse West */}
-          <rect x="175" y="170" width="35" height="260" rx="6" fill={getZoneColor("Concourse West")} stroke={getBorderColor("Concourse West")} strokeWidth={selectedZone === "Concourse West" ? "2" : "1"} className="map-zone" onClick={() => setSelectedZone("Concourse West")} />
+          <rect 
+            x="175" y="170" width="35" height="260" rx="6" 
+            fill={getZoneColor("Concourse West")} 
+            stroke={getBorderColor("Concourse West")} 
+            strokeWidth={selectedZone === "Concourse West" ? "2" : "1"} 
+            className="map-zone" 
+            onClick={() => setSelectedZone("Concourse West")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Concourse West"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Concourse Corridor: Concourse West. Occupancy: ${zones["Concourse West"]?.occupancy.toLocaleString() || 0} fans. Density: ${Math.round((zones["Concourse West"]?.density || 0) * 100)} percent.`}
+          />
           <text x="193" y="300" fill="var(--text-primary)" fontSize="10" textAnchor="middle" transform="rotate(90, 193, 300)" pointerEvents="none" fontWeight="500">CONCOURSE WEST</text>
 
           {/* SEATING BOWLS (Concentric Rings) */}
@@ -217,6 +339,10 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             strokeWidth="28" 
             className="map-zone"
             onClick={() => setSelectedZone("Seating 300 Level")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Seating 300 Level"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Stadium Seating: Upper 300 Level. Occupancy: ${zones["Seating 300 Level"]?.occupancy.toLocaleString() || 0} fans. Capacity: ${zones["Seating 300 Level"]?.capacity.toLocaleString() || 0}.`}
           />
           {/* Seating 200 Level */}
           <path 
@@ -226,6 +352,10 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             strokeWidth="22" 
             className="map-zone"
             onClick={() => setSelectedZone("Seating 200 Level")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Seating 200 Level"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Stadium Seating: Mid 200 Level. Occupancy: ${zones["Seating 200 Level"]?.occupancy.toLocaleString() || 0} fans. Capacity: ${zones["Seating 200 Level"]?.capacity.toLocaleString() || 0}.`}
           />
           {/* Seating 100 Level */}
           <path 
@@ -235,6 +365,10 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             strokeWidth="18" 
             className="map-zone"
             onClick={() => setSelectedZone("Seating 100 Level")}
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Seating 100 Level"); }}
+            tabIndex={0}
+            role="button"
+            aria-label={`Stadium Seating: Lower 100 Level. Occupancy: ${zones["Seating 100 Level"]?.occupancy.toLocaleString() || 0} fans. Capacity: ${zones["Seating 100 Level"]?.capacity.toLocaleString() || 0}.`}
           />
 
           {/* Inner Field Pitch */}

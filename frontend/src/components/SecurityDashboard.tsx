@@ -201,17 +201,18 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
             ))}
           </div>
         )}
-
         {/* Report / Inject Incident */}
         <h4 style={{ fontSize: "0.9rem", borderTop: "1px solid var(--border-color)", paddingTop: "15px", marginBottom: "10px" }}>Simulate / Inject Incident</h4>
         <form onSubmit={handleSubmitIncident} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
             <div>
-              <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-secondary)", marginBottom: "3px" }}>Type</label>
+              <label htmlFor="sec-type" style={{ display: "block", fontSize: "0.7rem", color: "var(--text-secondary)", marginBottom: "3px" }}>Type</label>
               <select 
+                id="sec-type"
                 value={incType} 
                 onChange={(e) => setIncType(e.target.value)}
                 style={{ width: "100%", padding: "6px 8px", borderRadius: "5px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "0.8rem" }}
+                aria-label="Incident Type"
               >
                 <option value="security">Security</option>
                 <option value="medical">Medical</option>
@@ -220,11 +221,13 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
               </select>
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-secondary)", marginBottom: "3px" }}>Severity</label>
+              <label htmlFor="sec-severity" style={{ display: "block", fontSize: "0.7rem", color: "var(--text-secondary)", marginBottom: "3px" }}>Severity</label>
               <select 
+                id="sec-severity"
                 value={incSeverity} 
                 onChange={(e) => setIncSeverity(e.target.value)}
                 style={{ width: "100%", padding: "6px 8px", borderRadius: "5px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "0.8rem" }}
+                aria-label="Incident Severity"
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -234,11 +237,13 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
             </div>
           </div>
           <div>
-            <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-secondary)", marginBottom: "3px" }}>Incident Zone</label>
+            <label htmlFor="sec-zone" style={{ display: "block", fontSize: "0.7rem", color: "var(--text-secondary)", marginBottom: "3px" }}>Incident Zone</label>
             <select 
+              id="sec-zone"
               value={incZone} 
               onChange={(e) => setIncZone(e.target.value)}
               style={{ width: "100%", padding: "6px 8px", borderRadius: "5px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "0.8rem" }}
+              aria-label="Incident Target Zone"
             >
               {zones.map((z) => (
                 <option key={z} value={z}>{z}</option>
@@ -246,18 +251,21 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
             </select>
           </div>
           <div>
-            <label style={{ display: "block", fontSize: "0.7rem", color: "var(--text-secondary)", marginBottom: "3px" }}>Message</label>
+            <label htmlFor="sec-message" style={{ display: "block", fontSize: "0.7rem", color: "var(--text-secondary)", marginBottom: "3px" }}>Message</label>
             <input 
+              id="sec-message"
               type="text" 
               value={incMsg} 
               onChange={(e) => setIncMsg(e.target.value)}
               style={{ width: "100%", padding: "6px 8px", borderRadius: "5px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "0.8rem" }}
+              aria-label="Incident Description Message"
             />
           </div>
           <button 
             type="submit" 
             className="btn-primary" 
             style={{ width: "100%", fontSize: "0.8rem", padding: "8px" }}
+            aria-label="Inject Incident Trigger"
           >
             Inject Emergency Alert
           </button>
