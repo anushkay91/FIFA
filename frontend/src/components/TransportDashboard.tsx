@@ -116,17 +116,18 @@ export const TransportDashboard: React.FC<TransportDashboardProps> = ({
         </div>
         <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Equivalent to planting {Math.round(carbonSavings / 20)} trees.</span>
       </div>
-
       {/* Transit Dispatch Panel */}
       <div className="glass-panel" style={{ padding: "20px" }}>
         <h3 style={{ fontSize: "1.2rem", marginBottom: "15px" }}>AI Transit Dispatcher</h3>
         <form onSubmit={handleDispatch} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           <div>
-            <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Select Hub</label>
+            <label htmlFor="transport-hub" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Select Hub</label>
             <select 
+              id="transport-hub"
               value={dispatchTarget} 
               onChange={(e) => setDispatchTarget(e.target.value)}
               style={{ width: "100%", padding: "8px", borderRadius: "6px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "0.8rem" }}
+              aria-label="Select Transit Hub Target"
             >
               <option value="Metro Station">Metro Station</option>
               <option value="West Shuttle Lot">West Shuttle Parking</option>
@@ -135,11 +136,13 @@ export const TransportDashboard: React.FC<TransportDashboardProps> = ({
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Dispatch Action</label>
+            <label htmlFor="transport-action" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Dispatch Action</label>
             <select 
+              id="transport-action"
               value={dispatchAction} 
               onChange={(e) => setDispatchAction(e.target.value)}
               style={{ width: "100%", padding: "8px", borderRadius: "6px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)", fontSize: "0.8rem" }}
+              aria-label="Dispatch Action Type"
             >
               <option value="increase_frequency">Increase Train Frequency (Line A/B)</option>
               <option value="add_shuttles">Deploy Electric Shuttle Fleet</option>
@@ -147,14 +150,19 @@ export const TransportDashboard: React.FC<TransportDashboardProps> = ({
             </select>
           </div>
 
-          <button type="submit" className="btn-primary" style={{ width: "100%", fontSize: "0.85rem", padding: "8px", marginTop: "5px" }}>
+          <button type="submit" className="btn-primary" style={{ width: "100%", fontSize: "0.85rem", padding: "8px", marginTop: "5px" }} aria-label="Execute AI Transit Dispatch">
             Execute Dispatch
           </button>
         </form>
 
         <div style={{ marginTop: "15px", borderTop: "1px solid var(--border-color)", paddingTop: "12px" }}>
           <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", marginBottom: "6px" }}>Dispatcher Logs</span>
-          <div style={{ display: "flex", flexDirection: "column", gap: "5px", maxHeight: "100px", overflowY: "auto" }}>
+          <div 
+            style={{ display: "flex", flexDirection: "column", gap: "5px", maxHeight: "100px", overflowY: "auto" }}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {dispatchLogs.map((log, idx) => (
               <span key={idx} style={{ fontSize: "0.7rem", color: idx === 0 ? "var(--accent-blue)" : "var(--text-secondary)", fontFamily: "monospace" }}>
                 {log}

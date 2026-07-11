@@ -127,7 +127,7 @@ export const OpsDashboard: React.FC<OpsDashboardProps> = ({
             {briefing.risk_level} Risk
           </span>
         </div>
-        <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.5", marginBottom: "15px" }}>
+        <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.5", marginBottom: "15px" }} id="ops-copilot-briefing">
           {briefing.summary}
         </p>
 
@@ -135,7 +135,7 @@ export const OpsDashboard: React.FC<OpsDashboardProps> = ({
           <h4 style={{ fontSize: "0.8rem", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "8px", letterSpacing: "0.05em" }}>
             Actionable Recommendations
           </h4>
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }} role="status" aria-live="polite" aria-atomic="true">
             {briefing.recommendations.map((rec, idx) => (
               <div 
                 key={idx} 
@@ -149,7 +149,7 @@ export const OpsDashboard: React.FC<OpsDashboardProps> = ({
                   border: "1px solid rgba(255,255,255,0.04)" 
                 }}
               >
-                <span style={{ color: "var(--accent-blue)" }}>✔</span>
+                <span style={{ color: "var(--accent-blue)" }} aria-hidden="true">✔</span>
                 <span>{rec}</span>
               </div>
             ))}
@@ -158,13 +158,35 @@ export const OpsDashboard: React.FC<OpsDashboardProps> = ({
       </div>
 
       {/* Proactive Forecasting Chart (30 Mins Prediction) */}
-      <div className="glass-panel" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div className="glass-panel" style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "10px" }} role="region" aria-label="Queue Congestion Forecasting and Wait Times Chart">
         <div>
           <h3 style={{ fontSize: "1rem" }}>Queue Congestion Forecasting</h3>
           <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Compare current vs. predicted wait times (20–40 min forecast)</p>
         </div>
 
-        <div style={{ width: "100%", height: "200px" }}>
+        {/* Visually hidden summary table for WCAG 2.2 chart compliance */}
+        <div style={{ position: "absolute", width: "1px", height: "1px", padding: 0, margin: "-1px", overflow: "hidden", clip: "rect(0, 0, 0, 0)", border: 0 }}>
+          <table aria-label="Queue Wait Times Forecast Data">
+            <thead>
+              <tr>
+                <th scope="col">Gate Terminal</th>
+                <th scope="col">Current Wait (m)</th>
+                <th scope="col">Forecasted Wait (m)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {chartData.map((row) => (
+                <tr key={row.name}>
+                  <td>Gate {row.name}</td>
+                  <td>{row.current} minutes</td>
+                  <td>{row.predicted} minutes</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ width: "100%", height: "200px" }} aria-hidden="true">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 5, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
