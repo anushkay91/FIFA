@@ -26,7 +26,7 @@ jobs:
 
     - name: Run Backend Pytest suite
       run: |
-        pytest backend/test_api.py backend/test_sim.py
+        pytest backend/
 
   frontend-build:
     runs-on: ubuntu-latest
