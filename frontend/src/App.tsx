@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense, useCallback, useMemo } from "react";
 import { DigitalTwin } from "./components/DigitalTwin";
 
 // Lazy-loaded dashboard components for performance
@@ -171,6 +171,8 @@ export default function App() {
   const [predictions, setPredictions] = useState<Record<string, any>>({});
   const [connected, setConnected] = useState<boolean>(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<any>(null);
+  const reconnectDelay = useRef<number>(1000);
 
   // Apply accessibility settings classes to body
   useEffect(() => {
@@ -195,15 +197,17 @@ export default function App() {
     };
   }, []);
 
-  // Connect to backend WebSocket
+  // Connect to backend WebSocket with exponential backoff
   useEffect(() => {
-    if (isOffline) return; // Skip socket attempts while offline
+    if (isOffline) return; 
+    
     const connectWS = () => {
       const ws = new WebSocket(getWsUrl());
       wsRef.current = ws;
 
       ws.onopen = () => {
         setConnected(true);
+        reconnectDelay.current = 1000; // Reset delay on successful connection
         console.log("WebSocket connected to CrowdMind AI Backend.");
       };
 
@@ -227,8 +231,10 @@ export default function App() {
 
       ws.onclose = () => {
         setConnected(false);
-        console.log("WebSocket disconnected. Retrying in 5s...");
-        setTimeout(connectWS, 5000);
+        const delay = Math.min(30000, reconnectDelay.current * 1.5);
+        reconnectDelay.current = delay;
+        console.log(`WebSocket disconnected. Retrying in ${delay / 1000}s...`);
+        reconnectTimeoutRef.current = setTimeout(connectWS, delay);
       };
 
       ws.onerror = (err) => {
@@ -241,11 +247,12 @@ export default function App() {
 
     return () => {
       if (wsRef.current) wsRef.current.close();
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
     };
-  }, []);
+  }, [isOffline]);
 
-  // Dispatch API trigger helpers
-  const handleSimulationControl = async (newScenario: string, newSpeed: number) => {
+  // Dispatch API trigger helpers wrapped in useCallback for render performance
+  const handleSimulationControl = useCallback(async (newScenario: string, newSpeed: number) => {
     try {
       const response = await fetch(`${getApiBase()}/api/simulation/control`, {
         method: "POST",
@@ -277,9 +284,9 @@ export default function App() {
         setIncidents([]);
       }
     }
-  };
+  }, []);
 
-  const handleGateControl = async (gate: string, status: string) => {
+  const handleGateControl = useCallback(async (gate: string, status: string) => {
     try {
       await fetch(`${getApiBase()}/api/security/gate`, {
         method: "POST",
@@ -290,9 +297,9 @@ export default function App() {
       console.warn("Gate control failed. Fallback locally.");
       setGateStatuses((prev) => ({ ...prev, [gate]: status }));
     }
-  };
+  }, []);
 
-  const handleVolunteerDispatch = async (volId: string, zone: string, task: string) => {
+  const handleVolunteerDispatch = useCallback(async (volId: string, zone: string, task: string) => {
     try {
       await fetch(`${getApiBase()}/api/volunteer/dispatch`, {
         method: "POST",
@@ -305,9 +312,9 @@ export default function App() {
         prev.map((vol) => vol.id === volId ? { ...vol, zone, status: "dispatched", task } : vol)
       );
     }
-  };
+  }, []);
 
-  const handleReportIncident = async (type: string, severity: string, zone: string, message: string) => {
+  const handleReportIncident = useCallback(async (type: string, severity: string, zone: string, message: string) => {
     try {
       await fetch(`${getApiBase()}/api/security/incident`, {
         method: "POST",
@@ -319,9 +326,9 @@ export default function App() {
       const newInc = { id: `local_${Date.now()}`, type, severity, zone, message };
       setIncidents((prev) => [...prev, newInc]);
     }
-  };
+  }, []);
 
-  const handleResolveIncident = async (incId: string) => {
+  const handleResolveIncident = useCallback(async (incId: string) => {
     try {
       await fetch(`${getApiBase()}/api/security/incident/resolve/${incId}`, {
         method: "POST"
@@ -330,15 +337,10 @@ export default function App() {
       console.warn("Incident resolve failed. Fallback locally.");
       setIncidents((prev) => prev.filter((inc) => inc.id !== incId));
     }
-  };
+  }, []);
 
-  const handleTriggerEvacuation = async (trigger: boolean) => {
+  const handleTriggerEvacuation = useCallback(async (trigger: boolean) => {
     try {
-      await fetch(`${getApiBase()}/api/security/evacuate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(trigger)
-      });
       // Correct fetch formatting for query params
       await fetch(`${getApiBase()}/api/security/evacuate?trigger=${trigger}`, {
         method: "POST"
@@ -347,14 +349,16 @@ export default function App() {
       console.warn("Evacuation toggle failed. Fallback locally.");
       handleSimulationControl(trigger ? "evacuation" : "normal", speed);
     }
-  };
+  }, [speed, handleSimulationControl]);
 
   const isEvacuation = scenario === "evacuation";
 
-  // Gate list for helper bindings
-  const gateWaitTimes = Object.entries(zones)
-    .filter(([_, data]) => data.type === "gate")
-    .reduce((acc, [name, data]) => ({ ...acc, [name]: data.wait_time }), {} as Record<string, number>);
+  // Gate list for helper bindings memoized to prevent re-computes
+  const gateWaitTimes = useMemo(() => {
+    return Object.entries(zones)
+      .filter(([_, data]) => data.type === "gate")
+      .reduce((acc, [name, data]) => ({ ...acc, [name]: data.wait_time }), {} as Record<string, number>);
+  }, [zones]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
