@@ -26,7 +26,7 @@ jobs:
 
     - name: Run Backend Pytest suite
       run: |
-        pytest backend/
+        python -m pytest backend/
 
   frontend-build:
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
 
     - name: Install Frontend Node modules
       working-directory: frontend
-      run: npm ci
+      run: npm install
 
     - name: Compile and Build Frontend
       working-directory: frontend
