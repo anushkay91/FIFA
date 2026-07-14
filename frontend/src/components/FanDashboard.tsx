@@ -1,5 +1,6 @@
 // src/components/FanDashboard.tsx
 import React, { useState } from "react";
+import { getApiBase } from "../config";
 
 interface FanDashboardProps {
   gateWaitTimes: Record<string, number>;
@@ -7,7 +8,7 @@ interface FanDashboardProps {
   isEvacuation: boolean;
 }
 
-export const FanDashboard: React.FC<FanDashboardProps> = ({
+export const FanDashboard: React.FC<FanDashboardProps> = React.memo(({
   gateWaitTimes,
   onRouteGenerated,
   isEvacuation
@@ -31,8 +32,7 @@ export const FanDashboard: React.FC<FanDashboardProps> = ({
   const handleGenerateRoute = async () => {
     setLoading(true);
     try {
-      const apiBase = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:8000" : "";
-      const response = await fetch(`${apiBase}/api/route`, {
+      const response = await fetch(`${getApiBase()}/api/route`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -51,7 +51,7 @@ export const FanDashboard: React.FC<FanDashboardProps> = ({
         concourse: data.concourse
       });
     } catch (e) {
-      console.error("Error generating fan route:", e);
+      console.warn("Error generating fan route, falling back locally:", e);
       // Fallback route generation client-side
       const fallbackGate = section <= 110 ? "Gate A" : section <= 120 ? "Gate C" : section <= 130 ? "Gate D" : "Gate F";
       const fallbackCC = section <= 110 ? "Concourse North" : section <= 120 ? "Concourse East" : section <= 130 ? "Concourse South" : "Concourse West";
@@ -121,7 +121,7 @@ export const FanDashboard: React.FC<FanDashboardProps> = ({
 
         {!routeResult ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {/* Language Selector */}
+            {/* Preferred Language Selector */}
             <div>
               <label htmlFor="fan-lang" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Preferred Language</label>
               <select 
@@ -270,4 +270,6 @@ export const FanDashboard: React.FC<FanDashboardProps> = ({
       </div>
     </div>
   );
-};
+});
+
+FanDashboard.displayName = "FanDashboard";

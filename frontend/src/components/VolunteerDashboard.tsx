@@ -1,13 +1,6 @@
 // src/components/VolunteerDashboard.tsx
 import React, { useState } from "react";
-
-interface Volunteer {
-  id: string;
-  name: string;
-  zone: string;
-  status: string;
-  task: string | null;
-}
+import type { Volunteer } from "../types";
 
 interface VolunteerDashboardProps {
   volunteers: Volunteer[];
@@ -15,7 +8,7 @@ interface VolunteerDashboardProps {
   zones: string[];
 }
 
-export const VolunteerDashboard: React.FC<VolunteerDashboardProps> = ({
+export const VolunteerDashboard: React.FC<VolunteerDashboardProps> = React.memo(({
   volunteers,
   onDispatch,
   zones
@@ -139,4 +132,6 @@ export const VolunteerDashboard: React.FC<VolunteerDashboardProps> = ({
       </div>
     </div>
   );
-};
+});
+
+VolunteerDashboard.displayName = "VolunteerDashboard";

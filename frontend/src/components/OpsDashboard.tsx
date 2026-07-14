@@ -1,32 +1,7 @@
 // src/components/OpsDashboard.tsx
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-
-interface BriefingData {
-  summary: string;
-  recommendations: string[];
-  risk_level: string;
-  critical_count: number;
-  high_count: number;
-}
-
-interface PredictionData {
-  predicted_occupancy: number;
-  predicted_density: number;
-  predicted_wait_time: number;
-  predicted_risk: string;
-  trend: string;
-}
-
-interface ZoneData {
-  type: string;
-  capacity: number;
-  occupancy: number;
-  flow_rate: number;
-  wait_time: number;
-  density: number;
-  risk_level: string;
-}
+import type { Zone, PredictionData, BriefingData } from "../types";
 
 interface OpsDashboardProps {
   attendance: number;
@@ -34,11 +9,11 @@ interface OpsDashboardProps {
   matchTime: string;
   briefing: BriefingData;
   predictions: Record<string, PredictionData>;
-  zones: Record<string, ZoneData>;
+  zones: Record<string, Zone>;
   activeIncidentsCount: number;
 }
 
-export const OpsDashboard: React.FC<OpsDashboardProps> = ({
+export const OpsDashboard: React.FC<OpsDashboardProps> = React.memo(({
   attendance,
   maxAttendance,
   matchTime,
@@ -204,4 +179,6 @@ export const OpsDashboard: React.FC<OpsDashboardProps> = ({
       </div>
     </div>
   );
-};
+});
+
+OpsDashboard.displayName = "OpsDashboard";

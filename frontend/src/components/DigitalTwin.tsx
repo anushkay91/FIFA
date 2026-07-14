@@ -1,18 +1,9 @@
 // src/components/DigitalTwin.tsx
-import React from "react";
-
-interface ZoneData {
-  type: string;
-  capacity: number;
-  occupancy: number;
-  flow_rate: number;
-  wait_time: number;
-  density: number;
-  risk_level: string;
-}
+import React, { useMemo } from "react";
+import type { Zone } from "../types";
 
 interface DigitalTwinProps {
-  zones: Record<string, ZoneData>;
+  zones: Record<string, Zone>;
   gateStatuses: Record<string, string>;
   selectedZone: string | null;
   setSelectedZone: (zone: string | null) => void;
@@ -22,7 +13,7 @@ interface DigitalTwinProps {
   } | null;
 }
 
-export const DigitalTwin: React.FC<DigitalTwinProps> = ({
+export const DigitalTwin: React.FC<DigitalTwinProps> = React.memo(({
   zones,
   gateStatuses,
   selectedZone,
@@ -64,8 +55,8 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
     return "rgba(255, 255, 255, 0.2)";
   };
 
-  // Get active route coordinates
-  const getRoutePath = () => {
+  // Get active route coordinates memoized to prevent recalculation on every render
+  const routePath = useMemo(() => {
     if (!activeRoute) return null;
     
     const gate = activeRoute.entry_gate;
@@ -96,7 +87,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
     
     // Smooth quadratic bezier route line
     return `M ${start.x} ${start.y} Q ${mid.x} ${mid.y} ${end.x} ${end.y}`;
-  };
+  }, [activeRoute]);
 
   return (
     <div className="glass-panel" style={{ padding: "20px", display: "flex", flexDirection: "column", height: "100%", position: "relative" }}>
@@ -148,7 +139,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             aria-label={`Transit Hub: Metro Station. Wait time: ${zones["Metro Station"]?.wait_time || 0} minutes. Density: ${Math.round((zones["Metro Station"]?.density || 0) * 100)} percent.`}
             style={{ cursor: "pointer" }}
           >
-            <rect x="30" y="30" width="100" height="60" rx="8" fill={getZoneColor("Metro Station")} stroke={getBorderColor("Metro Station")} strokeWidth={selectedZone === "Metro Station" ? "2" : "1"} />
+            <rect x="30" y="30" width="100" height="60" rx="8" fill={getZoneColor("Metro Station")} stroke={getBorderColor("Metro Station")} strokeWidth={selectedZone === "Metro Station" ? 2 : 1} />
             <text x="80" y="65" fill="var(--text-primary)" fontSize="10" textAnchor="middle" fontWeight="500">🚇 METRO</text>
           </g>
 
@@ -161,7 +152,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             aria-label={`Transit Hub: West Shuttle Parking. Wait time: ${zones["West Shuttle Lot"]?.wait_time || 0} minutes. Density: ${Math.round((zones["West Shuttle Lot"]?.density || 0) * 100)} percent.`}
             style={{ cursor: "pointer" }}
           >
-            <rect x="30" y="510" width="100" height="60" rx="8" fill={getZoneColor("West Shuttle Lot")} stroke={getBorderColor("West Shuttle Lot")} strokeWidth={selectedZone === "West Shuttle Lot" ? "2" : "1"} />
+            <rect x="30" y="510" width="100" height="60" rx="8" fill={getZoneColor("West Shuttle Lot")} stroke={getBorderColor("West Shuttle Lot")} strokeWidth={selectedZone === "West Shuttle Lot" ? 2 : 1} />
             <text x="80" y="545" fill="var(--text-primary)" fontSize="10" textAnchor="middle" fontWeight="500">🚌 SHUTTLES</text>
           </g>
 
@@ -174,7 +165,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             aria-label={`Transit Hub: East Rideshare Pick-up. Wait time: ${zones["East Rideshare Zone"]?.wait_time || 0} minutes. Density: ${Math.round((zones["East Rideshare Zone"]?.density || 0) * 100)} percent.`}
             style={{ cursor: "pointer" }}
           >
-            <rect x="670" y="150" width="100" height="60" rx="8" fill={getZoneColor("East Rideshare Zone")} stroke={getBorderColor("East Rideshare Zone")} strokeWidth={selectedZone === "East Rideshare Zone" ? "2" : "1"} />
+            <rect x="670" y="150" width="100" height="60" rx="8" fill={getZoneColor("East Rideshare Zone")} stroke={getBorderColor("East Rideshare Zone")} strokeWidth={selectedZone === "East Rideshare Zone" ? 2 : 1} />
             <text x="720" y="185" fill="var(--text-primary)" fontSize="10" textAnchor="middle" fontWeight="500">🚗 RIDESHARE</text>
           </g>
 
@@ -275,7 +266,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             x="250" y="100" width="300" height="35" rx="6" 
             fill={getZoneColor("Concourse North")} 
             stroke={getBorderColor("Concourse North")} 
-            strokeWidth={selectedZone === "Concourse North" ? "2" : "1"} 
+            strokeWidth={selectedZone === "Concourse North" ? 2 : 1} 
             className="map-zone" 
             onClick={() => setSelectedZone("Concourse North")}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Concourse North"); }}
@@ -290,7 +281,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             x="250" y="465" width="300" height="35" rx="6" 
             fill={getZoneColor("Concourse South")} 
             stroke={getBorderColor("Concourse South")} 
-            strokeWidth={selectedZone === "Concourse South" ? "2" : "1"} 
+            strokeWidth={selectedZone === "Concourse South" ? 2 : 1} 
             className="map-zone" 
             onClick={() => setSelectedZone("Concourse South")}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Concourse South"); }}
@@ -305,7 +296,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             x="590" y="170" width="35" height="260" rx="6" 
             fill={getZoneColor("Concourse East")} 
             stroke={getBorderColor("Concourse East")} 
-            strokeWidth={selectedZone === "Concourse East" ? "2" : "1"} 
+            strokeWidth={selectedZone === "Concourse East" ? 2 : 1} 
             className="map-zone" 
             onClick={() => setSelectedZone("Concourse East")}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Concourse East"); }}
@@ -320,7 +311,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
             x="175" y="170" width="35" height="260" rx="6" 
             fill={getZoneColor("Concourse West")} 
             stroke={getBorderColor("Concourse West")} 
-            strokeWidth={selectedZone === "Concourse West" ? "2" : "1"} 
+            strokeWidth={selectedZone === "Concourse West" ? 2 : 1} 
             className="map-zone" 
             onClick={() => setSelectedZone("Concourse West")}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setSelectedZone("Concourse West"); }}
@@ -377,11 +368,11 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
           <circle cx="400" cy="300" r="12" fill="none" stroke="rgba(255,255,255,0.2)" pointerEvents="none" />
 
           {/* ACTIVE FAN ROUTE OVERLAY */}
-          {activeRoute && getRoutePath() && (
+          {activeRoute && routePath && (
             <>
               {/* Route line glow effect */}
               <path 
-                d={getRoutePath() || ""} 
+                d={routePath} 
                 fill="none" 
                 stroke="rgba(10, 132, 255, 0.4)" 
                 strokeWidth="8" 
@@ -390,7 +381,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
               />
               {/* Core animated route line */}
               <path 
-                d={getRoutePath() || ""} 
+                d={routePath} 
                 fill="none" 
                 stroke="#0a84ff" 
                 strokeWidth="4" 
@@ -469,4 +460,6 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({
       </div>
     </div>
   );
-};
+});
+
+DigitalTwin.displayName = "DigitalTwin";

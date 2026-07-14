@@ -1,13 +1,6 @@
 // src/components/SecurityDashboard.tsx
 import React, { useState } from "react";
-
-interface Incident {
-  id: string;
-  type: string;
-  severity: string;
-  zone: string;
-  message: string;
-}
+import type { Incident } from "../types";
 
 interface SecurityDashboardProps {
   gateStatuses: Record<string, string>;
@@ -20,7 +13,7 @@ interface SecurityDashboardProps {
   zones: string[];
 }
 
-export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
+export const SecurityDashboard: React.FC<SecurityDashboardProps> = React.memo(({
   gateStatuses,
   onGateControl,
   incidents,
@@ -273,4 +266,6 @@ export const SecurityDashboard: React.FC<SecurityDashboardProps> = ({
       </div>
     </div>
   );
-};
+});
+
+SecurityDashboard.displayName = "SecurityDashboard";

@@ -4,6 +4,7 @@ import json
 import logging
 import time
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from typing import Dict, Any, List
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -21,61 +22,6 @@ from backend.agents import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("CrowdMindAI")
 
-app = FastAPI(title="CrowdMind AI Backend")
-
-# In-memory sliding window rate limiter
-RATE_LIMIT_DURATION = 60 # seconds
-RATE_LIMIT_REQUESTS = 60 # requests per minute
-ip_request_history = defaultdict(list)
-
-@app.middleware("http")
-async def rate_limiter(request: Request, call_next):
-    client_ip = request.client.host if request.client else "unknown"
-    current_time = time.time()
-    
-    # Filter list for request history
-    ip_request_history[client_ip] = [t for t in ip_request_history[client_ip] if current_time - t < RATE_LIMIT_DURATION]
-    
-    if len(ip_request_history[client_ip]) >= RATE_LIMIT_REQUESTS:
-        return JSONResponse(
-            status_code=429,
-            content={"detail": "Too Many Requests. Rate limit exceeded."}
-        )
-        
-    ip_request_history[client_ip].append(current_time)
-    response = await call_next(request)
-    return response
-
-# Security Headers Middleware
-@app.middleware("http")
-async def add_security_headers(request: Request, call_next):
-    response = await call_next(request)
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Content-Security-Policy"] = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://fonts.gstatic.com ws: wss:; img-src 'self' data:;"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers["Referrer-Policy"] = "no-referrer"
-    return response
-
-# Global Exception Handler
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled Exception: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "An internal server error occurred. Please contact system administrators."}
-    )
-
-# Enable CORS for frontend connection
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Global instances
 simulation = StadiumSimulation()
 crowd_agent = CrowdIntelligenceAgent()
@@ -83,7 +29,7 @@ fan_agent = FanAgent()
 ops_agent = OperationsCopilotAgent()
 volunteer_agent = VolunteerAgent()
 
-# WebSocket Manager to handle multiple connections
+# WebSockets Connection Manager
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
@@ -143,14 +89,75 @@ async def simulation_loop():
         # Tick interval: 1 second
         await asyncio.sleep(1.0)
 
-@app.on_event("startup")
-async def startup_event():
-    asyncio.create_task(simulation_loop())
-
-@app.on_event("shutdown")
-def shutdown_event():
+# Modern FastAPI Lifespan Handler replacing deprecated on_event
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup phase
+    loop_task = asyncio.create_task(simulation_loop())
+    yield
+    # Shutdown phase
     global simulation_active
     simulation_active = False
+    loop_task.cancel()
+    try:
+        await loop_task
+    except asyncio.CancelledError:
+        pass
+
+app = FastAPI(title="CrowdMind AI Backend", lifespan=lifespan)
+
+# In-memory sliding window rate limiter
+RATE_LIMIT_DURATION = 60 # seconds
+RATE_LIMIT_REQUESTS = 60 # requests per minute
+ip_request_history = defaultdict(list)
+
+@app.middleware("http")
+async def rate_limiter(request: Request, call_next):
+    client_ip = request.client.host if request.client else "unknown"
+    current_time = time.time()
+    
+    # Filter list for request history
+    ip_request_history[client_ip] = [t for t in ip_request_history[client_ip] if current_time - t < RATE_LIMIT_DURATION]
+    
+    if len(ip_request_history[client_ip]) >= RATE_LIMIT_REQUESTS:
+        return JSONResponse(
+            status_code=429,
+            content={"detail": "Too Many Requests. Rate limit exceeded."}
+        )
+        
+    ip_request_history[client_ip].append(current_time)
+    response = await call_next(request)
+    return response
+
+# Security Headers Middleware
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Content-Security-Policy"] = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://fonts.gstatic.com ws: wss:; img-src 'self' data:;"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    return response
+
+# Global Exception Handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled Exception: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal server error occurred. Please contact system administrators."}
+    )
+
+# Enable CORS for frontend connection
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # REST API Models
 class ControlRequest(BaseModel):
@@ -280,8 +287,7 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             # Keep connection alive; clients can send client commands if needed, 
             # or just receive the stream
-            data = await websocket.receive_text()
-            # Echo or process commands if any
+            await websocket.receive_text()
             
     except WebSocketDisconnect:
         manager.disconnect(websocket)

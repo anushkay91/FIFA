@@ -1,22 +1,13 @@
 // src/components/TransportDashboard.tsx
 import React, { useState } from "react";
-
-interface TransitZone {
-  type: string;
-  capacity: number;
-  occupancy: number;
-  flow_rate: number;
-  wait_time: number;
-  density: number;
-  risk_level: string;
-}
+import type { Zone } from "../types";
 
 interface TransportDashboardProps {
-  zones: Record<string, TransitZone>;
+  zones: Record<string, Zone>;
   scenario: string;
 }
 
-export const TransportDashboard: React.FC<TransportDashboardProps> = ({
+export const TransportDashboard: React.FC<TransportDashboardProps> = React.memo(({
   zones,
   scenario
 }) => {
@@ -116,6 +107,7 @@ export const TransportDashboard: React.FC<TransportDashboardProps> = ({
         </div>
         <span style={{ fontSize: "0.7rem", color: "var(--text-muted)" }}>Equivalent to planting {Math.round(carbonSavings / 20)} trees.</span>
       </div>
+
       {/* Transit Dispatch Panel */}
       <div className="glass-panel" style={{ padding: "20px" }}>
         <h3 style={{ fontSize: "1.2rem", marginBottom: "15px" }}>AI Transit Dispatcher</h3>
@@ -173,4 +165,6 @@ export const TransportDashboard: React.FC<TransportDashboardProps> = ({
       </div>
     </div>
   );
-};
+});
+
+TransportDashboard.displayName = "TransportDashboard";

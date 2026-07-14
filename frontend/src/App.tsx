@@ -1,6 +1,8 @@
 // src/App.tsx
 import React, { useState, useEffect, useRef, lazy, Suspense, useCallback, useMemo } from "react";
 import { DigitalTwin } from "./components/DigitalTwin";
+import { getApiBase, getWsUrl } from "./config";
+import type { Zone, Volunteer, Incident, PredictionData, BriefingData } from "./types";
 
 // Lazy-loaded dashboard components for performance
 const FanDashboard = lazy(() => import("./components/FanDashboard").then(m => ({ default: m.FanDashboard })));
@@ -62,64 +64,22 @@ const SkeletonLoader = () => (
   </div>
 );
 
-const getApiBase = () => {
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return "http://localhost:8000";
-  }
-  return "";
-};
-
-const getWsUrl = () => {
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    return "ws://localhost:8000/ws";
-  }
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.host}/ws`;
-};
-
-// Local backup types
-interface Zone {
-  type: string;
-  capacity: number;
-  occupancy: number;
-  flow_rate: number;
-  wait_time: number;
-  density: number;
-  risk_level: string;
+interface SimulationState {
+  zones: Record<string, Zone>;
+  gateStatuses: Record<string, string>;
+  scenario: string;
+  speed: number;
+  incidents: Incident[];
+  attendance: number;
+  maxAttendance: number;
+  matchTime: string;
+  volunteers: Volunteer[];
+  briefing: BriefingData;
+  predictions: Record<string, PredictionData>;
 }
 
-interface Volunteer {
-  id: string;
-  name: string;
-  zone: string;
-  status: string;
-  task: string | null;
-}
-
-interface Incident {
-  id: string;
-  type: string;
-  severity: string;
-  zone: string;
-  message: string;
-}
-
-export default function App() {
-  const [role, setRole] = useState<"fan" | "ops" | "volunteer" | "security" | "transport">("ops");
-  const [selectedZone, setSelectedZone] = useState<string | null>(null);
-  const [activeRoute, setActiveRoute] = useState<{ entry_gate: string; concourse: string } | null>(null);
-  
-  // Accessibility preferences state
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [contrast, setContrast] = useState<"normal" | "high">("normal");
-  const [motion, setMotion] = useState<"normal" | "reduced">("normal");
-  const [fontSize, setFontSize] = useState<"medium" | "large" | "xlarge">("medium");
-
-  // Offline monitoring state
-  const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
-  
-  // Real-time states
-  const [zones, setZones] = useState<Record<string, Zone>>({
+const initialSimulationState: SimulationState = {
+  zones: {
     "Gate A": { type: "gate", capacity: 8000, occupancy: 1500, flow_rate: 80, wait_time: 5, density: 0.18, risk_level: "low" },
     "Gate B": { type: "gate", capacity: 8000, occupancy: 1200, flow_rate: 75, wait_time: 4, density: 0.15, risk_level: "low" },
     "Gate C": { type: "gate", capacity: 10000, occupancy: 1800, flow_rate: 90, wait_time: 6, density: 0.18, risk_level: "low" },
@@ -136,27 +96,24 @@ export default function App() {
     "Metro Station": { type: "transit", capacity: 15000, occupancy: 2000, flow_rate: 220, wait_time: 8, density: 0.13, risk_level: "low" },
     "West Shuttle Lot": { type: "transit", capacity: 8000, occupancy: 800, flow_rate: 120, wait_time: 4, density: 0.1, risk_level: "low" },
     "East Rideshare Zone": { type: "transit", capacity: 6000, occupancy: 600, flow_rate: 90, wait_time: 5, density: 0.1, risk_level: "low" }
-  });
-  
-  const [gateStatuses, setGateStatuses] = useState<Record<string, string>>({
+  },
+  gateStatuses: {
     "Gate A": "open", "Gate B": "open", "Gate C": "open", "Gate D": "open", "Gate E": "open", "Gate F": "open"
-  });
-  
-  const [scenario, setScenario] = useState<string>("normal");
-  const [speed, setSpeed] = useState<number>(1.0);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [attendance, setAttendance] = useState<number>(29500);
-  const [maxAttendance] = useState<number>(75000);
-  const [matchTime, setMatchTime] = useState<string>("Pre-Match (45 mins to Kickoff)");
-  const [volunteers, setVolunteers] = useState<Volunteer[]>([
+  },
+  scenario: "normal",
+  speed: 1.0,
+  incidents: [],
+  attendance: 29500,
+  maxAttendance: 75000,
+  matchTime: "Pre-Match (45 mins to Kickoff)",
+  volunteers: [
     { id: "V1", name: "Squad Alpha", zone: "Gate A", status: "idle", task: null },
     { id: "V2", name: "Squad Beta", zone: "Gate C", status: "idle", task: null },
     { id: "V3", name: "Squad Gamma", zone: "Concourse East", status: "idle", task: null },
     { id: "V4", name: "Squad Delta", zone: "Gate F", status: "idle", task: null },
     { id: "V5", name: "Squad Epsilon", zone: "Metro Station", status: "idle", task: null }
-  ]);
-  
-  const [briefing, setBriefing] = useState({
+  ],
+  briefing: {
     summary: "Stadium operations are running optimally. Entry flow at all gates is stable. No bottlenecks detected.",
     recommendations: [
       "Maintain standard ticket scanning speeds.",
@@ -166,9 +123,27 @@ export default function App() {
     risk_level: "low",
     critical_count: 0,
     high_count: 0
-  });
+  },
+  predictions: {}
+};
 
-  const [predictions, setPredictions] = useState<Record<string, any>>({});
+export default function App() {
+  const [role, setRole] = useState<"fan" | "ops" | "volunteer" | "security" | "transport">("ops");
+  const [selectedZone, setSelectedZone] = useState<string | null>(null);
+  const [activeRoute, setActiveRoute] = useState<{ entry_gate: string; concourse: string } | null>(null);
+  
+  // Accessibility preferences state
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [contrast, setContrast] = useState<"normal" | "high">("normal");
+  const [motion, setMotion] = useState<"normal" | "reduced">("normal");
+  const [fontSize, setFontSize] = useState<"medium" | "large" | "xlarge">("medium");
+
+  // Offline monitoring state
+  const [isOffline, setIsOffline] = useState<boolean>(!navigator.onLine);
+  
+  // Consolidated simulation state
+  const [simData, setSimData] = useState<SimulationState>(initialSimulationState);
+  
   const [connected, setConnected] = useState<boolean>(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<any>(null);
@@ -214,16 +189,19 @@ export default function App() {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          setZones(data.state.zones);
-          setGateStatuses(data.state.gate_statuses);
-          setScenario(data.state.scenario);
-          setSpeed(data.state.speed);
-          setIncidents(data.state.incidents);
-          setAttendance(data.state.attendance);
-          setMatchTime(data.state.match_time);
-          setVolunteers(data.state.volunteers);
-          setBriefing(data.briefing);
-          setPredictions(data.predictions);
+          setSimData({
+            zones: data.state.zones,
+            gateStatuses: data.state.gate_statuses,
+            scenario: data.state.scenario,
+            speed: data.state.speed,
+            incidents: data.state.incidents,
+            attendance: data.state.attendance,
+            maxAttendance: data.state.max_attendance,
+            matchTime: data.state.match_time,
+            volunteers: data.state.volunteers,
+            briefing: data.briefing,
+            predictions: data.predictions
+          });
         } catch (e) {
           console.error("Failed to parse WebSocket state:", e);
         }
@@ -253,6 +231,24 @@ export default function App() {
 
   // Dispatch API trigger helpers wrapped in useCallback for render performance
   const handleSimulationControl = useCallback(async (newScenario: string, newSpeed: number) => {
+    if (isOffline) {
+      // Offline fallback
+      setSimData((prev) => ({
+        ...prev,
+        scenario: newScenario,
+        speed: newSpeed,
+        matchTime: newScenario === "evacuation" ? "EMERGENCY - EVACUATE IMMEDIATELY" : "Pre-Match (45 mins to Kickoff)",
+        incidents: newScenario === "evacuation" ? [{
+          id: "local_evac",
+          type: "security",
+          severity: "critical",
+          zone: "Seating 100 Level",
+          message: "Local Evacuation alarm triggered."
+        }] : []
+      }));
+      return;
+    }
+
     try {
       const response = await fetch(`${getApiBase()}/api/simulation/control`, {
         method: "POST",
@@ -261,32 +257,39 @@ export default function App() {
       });
       const data = await response.json();
       if (data.status === "success") {
-        setScenario(newScenario);
-        setSpeed(newSpeed);
+        setSimData((prev) => ({
+          ...prev,
+          scenario: newScenario,
+          speed: newSpeed
+        }));
       }
     } catch (e) {
       console.warn("Rest call failed. Falling back locally.", e);
-      setScenario(newScenario);
-      setSpeed(newSpeed);
-      
-      // Local backup logic
-      if (newScenario === "evacuation") {
-        setMatchTime("EMERGENCY - EVACUATE IMMEDIATELY");
-        setIncidents([{
+      setSimData((prev) => ({
+        ...prev,
+        scenario: newScenario,
+        speed: newSpeed,
+        matchTime: newScenario === "evacuation" ? "EMERGENCY - EVACUATE IMMEDIATELY" : "Pre-Match (45 mins to Kickoff)",
+        incidents: newScenario === "evacuation" ? [{
           id: "local_evac",
           type: "security",
           severity: "critical",
           zone: "Seating 100 Level",
           message: "Local Evacuation alarm triggered."
-        }]);
-      } else {
-        setMatchTime("Pre-Match (45 mins to Kickoff)");
-        setIncidents([]);
-      }
+        }] : []
+      }));
     }
-  }, []);
+  }, [isOffline]);
 
   const handleGateControl = useCallback(async (gate: string, status: string) => {
+    if (isOffline) {
+      setSimData((prev) => ({
+        ...prev,
+        gateStatuses: { ...prev.gateStatuses, [gate]: status }
+      }));
+      return;
+    }
+
     try {
       await fetch(`${getApiBase()}/api/security/gate`, {
         method: "POST",
@@ -294,12 +297,23 @@ export default function App() {
         body: JSON.stringify({ gate, status })
       });
     } catch (e) {
-      console.warn("Gate control failed. Fallback locally.");
-      setGateStatuses((prev) => ({ ...prev, [gate]: status }));
+      console.warn("Gate control failed. Fallback locally.", e);
+      setSimData((prev) => ({
+        ...prev,
+        gateStatuses: { ...prev.gateStatuses, [gate]: status }
+      }));
     }
-  }, []);
+  }, [isOffline]);
 
   const handleVolunteerDispatch = useCallback(async (volId: string, zone: string, task: string) => {
+    if (isOffline) {
+      setSimData((prev) => ({
+        ...prev,
+        volunteers: prev.volunteers.map((vol) => vol.id === volId ? { ...vol, zone, status: "dispatched", task } : vol)
+      }));
+      return;
+    }
+
     try {
       await fetch(`${getApiBase()}/api/volunteer/dispatch`, {
         method: "POST",
@@ -307,14 +321,24 @@ export default function App() {
         body: JSON.stringify({ volunteer_id: volId, zone, task })
       });
     } catch (e) {
-      console.warn("Volunteer dispatch failed. Fallback locally.");
-      setVolunteers((prev) => 
-        prev.map((vol) => vol.id === volId ? { ...vol, zone, status: "dispatched", task } : vol)
-      );
+      console.warn("Volunteer dispatch failed. Fallback locally.", e);
+      setSimData((prev) => ({
+        ...prev,
+        volunteers: prev.volunteers.map((vol) => vol.id === volId ? { ...vol, zone, status: "dispatched", task } : vol)
+      }));
     }
-  }, []);
+  }, [isOffline]);
 
   const handleReportIncident = useCallback(async (type: string, severity: string, zone: string, message: string) => {
+    if (isOffline) {
+      const newInc = { id: `local_${Date.now()}`, type, severity, zone, message };
+      setSimData((prev) => ({
+        ...prev,
+        incidents: [...prev.incidents, newInc]
+      }));
+      return;
+    }
+
     try {
       await fetch(`${getApiBase()}/api/security/incident`, {
         method: "POST",
@@ -322,43 +346,61 @@ export default function App() {
         body: JSON.stringify({ type, severity, zone, message })
       });
     } catch (e) {
-      console.warn("Incident report failed. Fallback locally.");
+      console.warn("Incident report failed. Fallback locally.", e);
       const newInc = { id: `local_${Date.now()}`, type, severity, zone, message };
-      setIncidents((prev) => [...prev, newInc]);
+      setSimData((prev) => ({
+        ...prev,
+        incidents: [...prev.incidents, newInc]
+      }));
     }
-  }, []);
+  }, [isOffline]);
 
   const handleResolveIncident = useCallback(async (incId: string) => {
+    if (isOffline) {
+      setSimData((prev) => ({
+        ...prev,
+        incidents: prev.incidents.filter((inc) => inc.id !== incId)
+      }));
+      return;
+    }
+
     try {
       await fetch(`${getApiBase()}/api/security/incident/resolve/${incId}`, {
         method: "POST"
       });
     } catch (e) {
-      console.warn("Incident resolve failed. Fallback locally.");
-      setIncidents((prev) => prev.filter((inc) => inc.id !== incId));
+      console.warn("Incident resolve failed. Fallback locally.", e);
+      setSimData((prev) => ({
+        ...prev,
+        incidents: prev.incidents.filter((inc) => inc.id !== incId)
+      }));
     }
-  }, []);
+  }, [isOffline]);
 
   const handleTriggerEvacuation = useCallback(async (trigger: boolean) => {
+    if (isOffline) {
+      handleSimulationControl(trigger ? "evacuation" : "normal", simData.speed);
+      return;
+    }
+
     try {
-      // Correct fetch formatting for query params
       await fetch(`${getApiBase()}/api/security/evacuate?trigger=${trigger}`, {
         method: "POST"
       });
     } catch (e) {
-      console.warn("Evacuation toggle failed. Fallback locally.");
-      handleSimulationControl(trigger ? "evacuation" : "normal", speed);
+      console.warn("Evacuation toggle failed. Fallback locally.", e);
+      handleSimulationControl(trigger ? "evacuation" : "normal", simData.speed);
     }
-  }, [speed, handleSimulationControl]);
+  }, [simData.speed, handleSimulationControl, isOffline]);
 
-  const isEvacuation = scenario === "evacuation";
+  const isEvacuation = simData.scenario === "evacuation";
 
   // Gate list for helper bindings memoized to prevent re-computes
   const gateWaitTimes = useMemo(() => {
-    return Object.entries(zones)
+    return Object.entries(simData.zones)
       .filter(([_, data]) => data.type === "gate")
       .reduce((acc, [name, data]) => ({ ...acc, [name]: data.wait_time }), {} as Record<string, number>);
-  }, [zones]);
+  }, [simData.zones]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
@@ -580,10 +622,11 @@ export default function App() {
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Match Phase Scenario</label>
+            <label id="match-phase-label" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>Match Phase Scenario</label>
             <select 
-              value={scenario}
-              onChange={(e) => handleSimulationControl(e.target.value, speed)}
+              aria-labelledby="match-phase-label"
+              value={simData.scenario}
+              onChange={(e) => handleSimulationControl(e.target.value, simData.speed)}
               style={{ width: "100%", padding: "8px", borderRadius: "6px", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", color: "var(--text-primary)" }}
             >
               <option value="normal">Normal Entrance Phase</option>
@@ -595,16 +638,17 @@ export default function App() {
           </div>
 
           <div>
-            <label style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>
-              Simulation Acceleration ({speed}x)
+            <label id="speed-label" style={{ display: "block", fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "4px" }}>
+              Simulation Acceleration ({simData.speed}x)
             </label>
             <input 
+              aria-labelledby="speed-label"
               type="range" 
               min="0.5" 
               max="5.0" 
               step="0.5"
-              value={speed}
-              onChange={(e) => handleSimulationControl(scenario, parseFloat(e.target.value))}
+              value={simData.speed}
+              onChange={(e) => handleSimulationControl(simData.scenario, parseFloat(e.target.value))}
               style={{ width: "100%", accentColor: "var(--accent-blue)", cursor: "pointer" }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.65rem", color: "var(--text-muted)", marginTop: "2px" }}>
@@ -637,8 +681,8 @@ export default function App() {
         {/* MIDDLE COLUMN: DIGITAL TWIN MAP */}
         <section style={{ height: "100%" }}>
           <DigitalTwin 
-            zones={zones}
-            gateStatuses={gateStatuses}
+            zones={simData.zones}
+            gateStatuses={simData.gateStatuses}
             selectedZone={selectedZone}
             setSelectedZone={setSelectedZone}
             activeRoute={activeRoute}
@@ -651,13 +695,13 @@ export default function App() {
             <Suspense fallback={<SkeletonLoader />}>
               {role === "ops" && (
                 <OpsDashboard 
-                  attendance={attendance}
-                  maxAttendance={maxAttendance}
-                  matchTime={matchTime}
-                  briefing={briefing}
-                  predictions={predictions}
-                  zones={zones}
-                  activeIncidentsCount={incidents.length}
+                  attendance={simData.attendance}
+                  maxAttendance={simData.maxAttendance}
+                  matchTime={simData.matchTime}
+                  briefing={simData.briefing}
+                  predictions={simData.predictions}
+                  zones={simData.zones}
+                  activeIncidentsCount={simData.incidents.length}
                 />
               )}
               {role === "fan" && (
@@ -669,27 +713,27 @@ export default function App() {
               )}
               {role === "volunteer" && (
                 <VolunteerDashboard 
-                  volunteers={volunteers}
+                  volunteers={simData.volunteers}
                   onDispatch={handleVolunteerDispatch}
-                  zones={Object.keys(zones).filter((z) => zones[z].type !== "seating")}
+                  zones={Object.keys(simData.zones).filter((z) => simData.zones[z].type !== "seating")}
                 />
               )}
               {role === "security" && (
                 <SecurityDashboard 
-                  gateStatuses={gateStatuses}
+                  gateStatuses={simData.gateStatuses}
                   onGateControl={handleGateControl}
-                  incidents={incidents}
+                  incidents={simData.incidents}
                   onReportIncident={handleReportIncident}
                   onResolveIncident={handleResolveIncident}
                   isEvacuation={isEvacuation}
                   onTriggerEvacuation={handleTriggerEvacuation}
-                  zones={Object.keys(zones)}
+                  zones={Object.keys(simData.zones)}
                 />
               )}
               {role === "transport" && (
                 <TransportDashboard 
-                  zones={zones}
-                  scenario={scenario}
+                  zones={simData.zones}
+                  scenario={simData.scenario}
                 />
               )}
             </Suspense>
